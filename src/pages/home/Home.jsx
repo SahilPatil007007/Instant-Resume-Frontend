@@ -83,32 +83,7 @@ const Home = () => {
                   <span>Create Resume</span>
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link
-                  to="/your-resumes"
-                  className="btn-outline text-lg px-8 py-4"
-                >
-                  View Examples
-                </Link>
               </div>
-            </motion.div>
-
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20"
-            >
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-primary-600 mb-2">
-                    {stat.number}
-                  </div>
-                  <div className="text-gray-600 dark:text-gray-300">
-                    {stat.label}
-                  </div>
-                </div>
-              ))}
             </motion.div>
           </div>
         </div>
