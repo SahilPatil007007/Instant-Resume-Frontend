@@ -7,6 +7,7 @@ export default {
     darkMode: 'class',
     theme: {
       extend: {
+        scrollbar: ['rounded'],
         fontFamily: {
           sans: ['Inter', 'system-ui', 'sans-serif'],
         },
@@ -69,6 +70,8 @@ export default {
         },
       },
     },
-    plugins: [],
+    plugins: [
+      require('tailwind-scrollbar'),
+    ],
   }
   

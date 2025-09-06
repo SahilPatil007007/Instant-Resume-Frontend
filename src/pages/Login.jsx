@@ -33,8 +33,8 @@ const Login = () => {
     }
 
     const result = await login(formData.email, formData.password);
-    
-    if (result.success) {
+    const data = result.json();
+    if (data.success) {
       navigate('/');
     } else {
       setError(result.error || 'Login failed');

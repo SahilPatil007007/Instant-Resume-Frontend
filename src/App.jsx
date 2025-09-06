@@ -9,7 +9,7 @@ import Resumes from "./pages/resumes/Resumes.jsx";
 import CreateResume from "./pages/createResume/CreateResume.jsx";
 
 function App() {
-  const { authUser, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   // While auth status is being checked
   if (loading) {
@@ -21,10 +21,11 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home/>}></Route>
-        <Route path="/login" element={authUser? <Navigate to={"/"}/> : <Login />}></Route>
-        <Route path="/signup" element={authUser? <Navigate to={"/"}/> : <Signup />}></Route>
-        <Route path="/your-resumes" element={authUser? <Resumes />: <Navigate to={"/login"} />}></Route>
-        <Route path="/create-resume" element={<CreateResume />}></Route>
+        <Route path="/login" element={user? <Navigate to={"/"}/> : <Login />}></Route>
+        <Route path="/signup" element={user? <Navigate to={"/"}/> : <Signup />}></Route>
+        <Route path="/your-resumes" element={user? <Resumes />: <Navigate to={"/login"} />}></Route>
+        <Route path="/create-resume" element={user? <CreateResume />: <Navigate to={"/login"} />}></Route>
+        <Route path="/edit-resume/:id" element={user? <CreateResume />: <Navigate to={"/login"} />}></Route>
       </Routes>
     </div>
   )

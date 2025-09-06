@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Calendar, Github, Linkedin, Globe, ExternalLink } from 'lucide-react';
+import ReactMarkdown from "react-markdown";
 
-const ResumePreview = ({ data, template = 'classic' }) => {
+const ResumePreview = ({ data, template = 'ats' }) => {
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -24,14 +25,250 @@ const ResumePreview = ({ data, template = 'classic' }) => {
     );
   }
 
+  if (template === 'classic') {
+    return (
+      <ClassicTemplate 
+        data={data} 
+        formatDate={formatDate} 
+        formatDateRange={formatDateRange} 
+      />
+    );
+  }
+
+  // Default ATS template
   return (
-    <ClassicTemplate 
+    <ATSTemplate 
       data={data} 
       formatDate={formatDate} 
       formatDateRange={formatDateRange} 
     />
   );
 };
+
+const ATSTemplate = ({ data, formatDate, formatDateRange }) => (
+  <motion.div 
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 0.3 }}
+    className="p-4 max-w-[8.27in] mx-auto bg-white text-black text-xs leading-tight"
+    style={{ 
+      fontFamily: 'Arial, sans-serif',
+      minHeight: '11.69in',
+      maxHeight: '11.69in',
+      fontSize: '11px',
+      lineHeight: '1.2'
+    }}
+  >
+    {/* Header - Compact */}
+    <div className="text-center border-b border-black pb-2 mb-3">
+      <h1 className="text-lg font-bold text-black mb-1" style={{ fontSize: '16px' }}>
+        {data.personalInfo?.name || 'YOUR NAME'}
+      </h1>
+      <div className="flex justify-center items-center space-x-4 text-xs">
+        {data.personalInfo?.email && (
+          <span>{data.personalInfo.email}</span>
+        )}
+        {data.personalInfo?.phone && (
+          <span>{data.personalInfo.phone}</span>
+        )}
+        {data.personalInfo?.address && (
+          <span>{data.personalInfo.address}</span>
+        )}
+      </div>
+      {(data.personalInfo?.linkedin || data.personalInfo?.github || data.personalInfo?.portfolio) && (
+        <div className="flex justify-center items-center space-x-4 text-xs mt-1">
+          {data.personalInfo?.linkedin && (
+            <span>LinkedIn: {data.personalInfo.linkedin}</span>
+          )}
+          {data.personalInfo?.github && (
+            <span>GitHub: {data.personalInfo.github}</span>
+          )}
+          {data.personalInfo?.portfolio && (
+            <span>Portfolio: {data.personalInfo.portfolio}</span>
+          )}
+        </div>
+      )}
+    </div>
+
+    {/* Professional Summary - Compact */}
+    {data.summary && (
+      <div className="mb-3">
+        <h2 className="text-sm font-bold text-black border-b border-gray-400 pb-1 mb-2">
+          PROFESSIONAL SUMMARY
+        </h2>
+        <p className="text-xs leading-tight">
+          {data.summary}
+        </p>
+      </div>
+    )}
+
+    {/* Skills - Horizontal layout for space efficiency */}
+    {data.skills && data.skills.length > 0 && (
+      <div className="mb-3">
+        <h2 className="text-sm font-bold text-black border-b border-gray-400 pb-1 mb-2">
+          TECHNICAL SKILLS
+        </h2>
+        <p className="text-xs">
+          {data.skills.join(' • ')}
+        </p>
+      </div>
+    )}
+
+    {/* Work Experience - Optimized spacing */}
+    {data.experience && data.experience.some(exp => exp.company || exp.title) && (
+      <div className="mb-3">
+        <h2 className="text-sm font-bold text-black border-b border-gray-400 pb-1 mb-2">
+          PROFESSIONAL EXPERIENCE
+        </h2>
+        <div className="space-y-2">
+          {data.experience
+            .filter(exp => exp.company || exp.title)
+            .map((exp) => (
+              <div key={exp.id}>
+                <div className="flex justify-between items-start mb-1">
+                  <div>
+                    <h3 className="font-bold text-black text-xs">
+                      {exp.title || 'Position'} | {exp.company || 'Company'}
+                    </h3>
+                  </div>
+                  {(exp.startDate || exp.endDate || exp.current) && (
+                    <div className="text-xs text-black">
+                      {formatDateRange(exp.startDate, exp.endDate, exp.current)}
+                    </div>
+                  )}
+                </div>
+                {exp.description && exp.description.filter(desc => desc.trim()).length > 0 && (
+                  <ul className="text-xs text-black leading-tight ml-3 mb-1">
+                    {exp.description.filter(desc => desc.trim()).map((desc, index) => (
+                      <li key={index} className="list-disc mb-0.5">{desc}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+        </div>
+      </div>
+    )}
+
+    {/* Projects - Compact format */}
+    {data.projects && data.projects.some(project => project.name) && (
+      <div className="mb-3">
+        <h2 className="text-sm font-bold text-black border-b border-gray-400 pb-1 mb-2">
+          PROJECTS
+        </h2>
+        <div className="space-y-2">
+          {data.projects
+            .filter(project => project.name)
+            .map((project) => (
+              <div key={project.id}>
+                <h3 className="font-bold text-black text-xs mb-1">
+                  {project.name}
+                  {project.technologies && project.technologies.length > 0 && (
+                    <span className="font-normal"> | Technologies: {project.technologies.join(', ')}</span>
+                  )}
+                </h3>
+                {project.description && project.description.filter(desc => desc.trim()).length > 0 && (
+                  <ul className="text-xs text-black leading-tight ml-3">
+                    {project.description.filter(desc => desc.trim()).map((desc, index) => (
+                      <li key={index} className="list-disc mb-0.5">{desc}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+        </div>
+      </div>
+    )}
+
+    {/* Education - Inline format */}
+    {data.education && data.education.some(edu => edu.institution || edu.degree) && (
+      <div className="mb-3">
+        <h2 className="text-sm font-bold text-black border-b border-gray-400 pb-1 mb-2">
+          EDUCATION
+        </h2>
+        <div className="space-y-1">
+          {data.education
+            .filter(edu => edu.institution || edu.degree)
+            .map((edu) => (
+              <div key={edu.id} className="flex justify-between items-start">
+                <div>
+                  <span className="font-bold text-black text-xs">
+                    {edu.degree || 'Degree'} | {edu.institution || 'Institution'}
+                  </span>
+                  {edu.score && <span className="text-xs"> | {edu.score}</span>}
+                </div>
+                {(edu.startDate || edu.endDate || edu.current) && (
+                  <div className="text-xs text-black">
+                    {formatDateRange(edu.startDate, edu.endDate, edu.current)}
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+      </div>
+    )}
+
+    {/* Certifications - Compact */}
+    {data.certifications && data.certifications.some(cert => cert.title) && (
+      <div className="mb-3">
+        <h2 className="text-sm font-bold text-black border-b border-gray-400 pb-1 mb-2">
+          CERTIFICATIONS
+        </h2>
+        <div className="space-y-1">
+          {data.certifications
+            .filter(cert => cert.title)
+            .map((cert) => (
+              <div key={cert.id} className="flex justify-between items-start">
+                <div>
+                  <span className="font-bold text-black text-xs">
+                    {cert.title}
+                    {cert.issuer && <span className="font-normal"> | {cert.issuer}</span>}
+                  </span>
+                </div>
+                {cert.date && (
+                  <div className="text-xs text-black">
+                    {formatDate(cert.date)}
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+      </div>
+    )}
+
+    {/* Achievements - Compact list */}
+    {data.achievements && data.achievements.length > 0 && (
+      <div className="mb-3">
+        <h2 className="text-sm font-bold text-black border-b border-gray-400 pb-1 mb-2">
+          ACHIEVEMENTS
+        </h2>
+        <ul className="text-xs text-black leading-tight ml-3">
+          {data.achievements.map((achievement, index) => (
+            <li key={index} className="list-disc mb-0.5">
+              {achievement}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+
+    {/* Extra Curricular - Compact */}
+    {data.extraCurricular && data.extraCurricular.length > 0 && (
+      <div>
+        <h2 className="text-sm font-bold text-black border-b border-gray-400 pb-1 mb-2">
+          EXTRACURRICULAR ACTIVITIES
+        </h2>
+        <ul className="text-xs text-black leading-tight ml-3">
+          {data.extraCurricular.map((activity, index) => (
+            <li key={index} className="list-disc mb-0.5">
+              {activity}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
+  </motion.div>
+);
 
 const ClassicTemplate = ({ data, formatDate, formatDateRange }) => (
   <motion.div 
@@ -42,14 +279,16 @@ const ClassicTemplate = ({ data, formatDate, formatDateRange }) => (
     style={{ fontFamily: 'serif' }}
   >
     {/* Header */}
-    <div className="text-center border-b-2 border-gray-300 pb-4 mb-6">
-      <div className="flex items-center justify-center space-x-6 mb-4">
+    <div className="text-center border-b border-gray-300 pb-2 mb-4">
+      <div className="flex items-center justify-center space-x-4 mb-2">
+
         {data.personalInfo?.photoUrl && data.personalInfo?.showPhoto && (
-          <img
-            src={data.personalInfo.photoUrl}
-            alt="Profile"
-            className="w-24 h-24 rounded-full object-cover border-4 border-gray-300"
-          />
+            <img
+              src={data.personalInfo.photoUrl}
+              alt="Profile"
+              className="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
+            />
+
         )}
         <div className={data.personalInfo?.photoUrl && data.personalInfo?.showPhoto ? 'text-left' : 'text-center'}>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -108,7 +347,7 @@ const ClassicTemplate = ({ data, formatDate, formatDateRange }) => (
         </p>
       </div>
     )}
-
+ 
     {/* Work Experience */}
     {data.experience && data.experience.some(exp => exp.company || exp.title) && (
       <div className="mb-6">
@@ -168,10 +407,12 @@ const ClassicTemplate = ({ data, formatDate, formatDateRange }) => (
                     )}
                   </h3>
                 </div>
-                {project.description && (
-                  <p className="text-sm text-gray-600 leading-relaxed mb-2">
-                    {project.description}
-                  </p>
+                {project.description && project.description.filter(desc => desc.trim()).length > 0 && (
+                  <ul className="text-sm text-gray-600 leading-relaxed ml-4 mb-2">
+                    {project.description.filter(desc => desc.trim()).map((desc, index) => (
+                      <li key={index} className="list-disc mb-1">{desc}</li>
+                    ))}
+                  </ul>
                 )}
                 {project.technologies && project.technologies.length > 0 && (
                   <div className="flex flex-wrap gap-1">
@@ -429,9 +670,11 @@ const ModernTemplate = ({ data, formatDate, formatDateRange }) => (
             <h2 className="text-xl font-bold text-gray-900 mb-3 text-blue-800">
               PROFILE
             </h2>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              {data.summary}
-            </p>
+            <div className="prose text-sm text-gray-700">
+              <ReactMarkdown>
+                {data.summary}
+              </ReactMarkdown>
+            </div>
           </div>
         )}
 
@@ -495,10 +738,12 @@ const ModernTemplate = ({ data, formatDate, formatDateRange }) => (
                         )}
                       </h3>
                     </div>
-                    {project.description && (
-                      <p className="text-sm text-gray-600 leading-relaxed mb-2">
-                        {project.description}
-                      </p>
+                    {project.description && project.description.filter(desc => desc.trim()).length > 0 && (
+                      <ul className="text-sm text-gray-600 leading-relaxed ml-4 mb-2">
+                        {project.description.filter(desc => desc.trim()).map((desc, index) => (
+                          <li key={index} className="list-disc mb-1">{desc}</li>
+                        ))}
+                      </ul>
                     )}
                     {project.technologies && project.technologies.length > 0 && (
                       <div className="flex flex-wrap gap-1">
@@ -589,5 +834,4 @@ const ModernTemplate = ({ data, formatDate, formatDateRange }) => (
     </div>
   </motion.div>
 );
-
 export default ResumePreview;

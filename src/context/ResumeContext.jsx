@@ -1,4 +1,12 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { 
+  fetchResumes,
+  fetchResumeById,
+  createResumeApi,
+  updateResumeApi,
+  deleteResumeApi
+} from '../api/resume';
+import { useAuth } from './AuthContext';
 
 const ResumeContext = createContext();
 
@@ -11,66 +19,90 @@ export const useResume = () => {
 };
 
 export const ResumeProvider = ({ children }) => {
-  const [resumes, setResumes] = useState([
-    {
-      id: '1',
-      title: 'Software Engineer Resume',
-      lastUpdated: '2025-01-08',
-      data: {
-        fullName: 'John Doe',
-        summary: 'Experienced software engineer with 5+ years in full-stack development.',
-        workExperience: [
-          {
-            id: '1',
-            company: 'Tech Corp',
-            position: 'Senior Developer',
-            startDate: '2020-01',
-            endDate: 'Present',
-            description: 'Led development of web applications using React and Node.js.',
-          }
-        ],
-        education: [
-          {
-            id: '1',
-            school: 'University of Technology',
-            degree: 'BS Computer Science',
-            startDate: '2016-09',
-            endDate: '2020-05',
-          }
-        ],
-        skills: ['JavaScript', 'React', 'Node.js', 'Python', 'AWS'],
-        photo: null,
-      },
-    },
-  ]);
-
+  const {user} = useAuth();
+  const [resumes, setResumes] = useState([]);
   const [currentResume, setCurrentResume] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const createResume = (resumeData) => {
-    const newResume = {
-      id: Date.now().toString(),
-      title: resumeData.title || 'Untitled Resume',
-      lastUpdated: new Date().toISOString().split('T')[0],
-      data: resumeData,
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const list = await fetchResumes();
+        // Map backend items to UI-friendly shape
+        const mapped = list.map((r) => ({
+          id: r._id,
+          title: r.title || 'Untitled Resume',
+          lastUpdated: r.updatedAt?.split('T')[0] || '',
+          data: {},
+        }));
+        if (isMounted) setResumes(mapped);
+      } catch (e) {
+        if (isMounted) setError('Failed to load resumes');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    })();
+    return () => { isMounted = false; };
+  }, [user]);
+
+  const createResume = async (resumeData) => {
+    const created = await createResumeApi(resumeData);
+    const mapped = {
+      id: created._id,
+      title: created.title || 'Untitled Resume',
+      lastUpdated: created.updatedAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+      data: {},
     };
-    setResumes(prev => [...prev, newResume]);
-    return newResume;
+    setResumes((prev) => [mapped, ...prev]);
+    return mapped;
   };
 
-  const updateResume = (id, updates) => {
-    setResumes(prev => prev.map(resume => 
-      resume.id === id 
-        ? { ...resume, ...updates, lastUpdated: new Date().toISOString().split('T')[0] }
-        : resume
-    ));
+  const updateResume = async (id, updates) => {
+    const updated = await updateResumeApi(id, updates);
+    setResumes((prev) => prev.map((r) => (
+      r.id === id
+        ? {
+            ...r,
+            title: updated.title ?? r.title,
+            lastUpdated: updated.updatedAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+          }
+        : r
+    )));
+    if (currentResume?.id === id) {
+      setCurrentResume((cr) => cr ? { ...cr, ...updates } : cr);
+    }
   };
 
-  const deleteResume = (id) => {
-    setResumes(prev => prev.filter(resume => resume.id !== id));
+  const deleteResume = async (id) => {
+    await deleteResumeApi(id);
+    setResumes((prev) => prev.filter((r) => r.id !== id));
+    if (currentResume?.id === id) setCurrentResume(null);
   };
 
-  const getResume = (id) => {
-    return resumes.find(resume => resume.id === id);
+  const getResume = async (id) => {
+    const inState = resumes.find((r) => r.id === id);
+    if (inState && inState.data && Object.keys(inState.data).length > 0) return inState;
+    const full = await fetchResumeById(id);
+    const mapped = {
+      id: full._id,
+      title: full.title || 'Untitled Resume',
+      lastUpdated: full.updatedAt?.split('T')[0] || '',
+      data: {
+        // Adapt fields if your UI consumes them later
+        fullName: full.personalInfo?.name || '',
+        workExperience: full.experience || [],
+        education: full.education || [],
+        skills: full.skills || [],
+      },
+    };
+    setResumes((prev) => {
+      const exists = prev.some((r) => r.id === id);
+      return exists ? prev.map((r) => (r.id === id ? mapped : r)) : [mapped, ...prev];
+    });
+    return mapped;
   };
 
   const value = {
@@ -81,6 +113,8 @@ export const ResumeProvider = ({ children }) => {
     updateResume,
     deleteResume,
     getResume,
+    loading,
+    error,
   };
 
   return (

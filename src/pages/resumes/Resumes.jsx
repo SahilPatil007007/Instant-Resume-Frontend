@@ -9,9 +9,11 @@ import {
   Calendar, 
   FileText,
   Search,
-  Filter
+  Filter,
+  X
 } from 'lucide-react';
 import { useResume } from '../../context/ResumeContext';
+import ResumePreview from '../../components/ResumePreview';
 
 const Resumes = () => {
   const { resumes, deleteResume } = useResume();
@@ -150,10 +152,6 @@ const Resumes = () => {
 
                 {/* Action Buttons */}
                 <div className="flex space-x-2">
-                  <button className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-200">
-                    <Eye className="h-4 w-4" />
-                    <span>View</span>
-                  </button>
                   <Link
                     to={`/edit-resume/${resume.id}`}
                     className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors duration-200"
